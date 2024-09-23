@@ -69,11 +69,10 @@ h2 {
 }
 
 a {
-	@apply text-medium-green underline mb-16 text-sm font-medium;
+	@apply text-indigo underline mb-16 text-sm font-medium;
 }
 
 .error.error {
-	@apply text-dark-pink border-dark-pink;
 }
 
 .error-message {
