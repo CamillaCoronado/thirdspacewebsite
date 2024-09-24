@@ -58,6 +58,7 @@ body {
 h2 {
     font-size:40px;
     color: white;
+	letter-spacing: 0.007em;
 }
 
 .btn {
@@ -72,11 +73,12 @@ a {
 	@apply text-indigo underline mb-16 text-sm font-medium;
 }
 
-.error.error {
-}
-
 .error-message {
 	@apply text-sm;
 	position: relative;
 	bottom:12px;
+}
+
+button.bold-text {
+	font-weight: 700;
 }
