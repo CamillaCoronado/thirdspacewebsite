@@ -1,6 +1,6 @@
 <script>
     import '../app.css';
 </script>  
-<main>
+<main class="bg-indigo">
   <slot></slot>
 </main>

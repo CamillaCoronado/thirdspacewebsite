@@ -70,7 +70,7 @@ h2 {
 }
 
 a {
-	@apply text-indigo underline mb-16 text-sm font-medium;
+	@apply text-indigo underline text-sm font-bold;
 }
 
 .error-message {
@@ -79,6 +79,23 @@ a {
 	bottom:12px;
 }
 
-button.bold-text {
+.bold-text {
 	font-weight: 700;
 }
+
+/* .astronaut {
+    width: 150px;
+    animation: bounceSway 5s ease-in-out infinite;
+  }
+
+@keyframes bounceSway {
+	0% {
+		transform: translateY(0) translateX(0) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-20px) rotate(5deg);
+	}
+	100% {
+		transform: translateY(0) rotate(-5deg); 
+	}
+} */
