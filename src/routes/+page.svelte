@@ -29,13 +29,23 @@
  function backJoin() {
   showNewBlock = "initial"
  }
+
+ const getNextWaitlistNumber = async () => {
+    const waitlistRef = firestore.collection('waitlist');
+    const snapshot = await waitlistRef.get();
+    return snapshot.size + 1; // Waitlist number is one more than the current count
+};
+
+
   </script>
   
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
     <!-- Navigation -->
     <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32 md:mb-64">
       <!-- <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a> -->
-      <img on:click={backJoin} src="../src/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
+      <button on:click={backJoin}>
+        <img src="../src/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
+      </button>
     </header>
   
     <!-- Main Section -->
@@ -44,7 +54,7 @@
         {#if showNewBlock == "initial"} <!-- Right: Waitlist Form -->
         <div class="text-white rounded-lg w-full max-w-lg flex-col">
           <h4 class="text-2xl font-bold mb-8 uppercase hidden md:block">Introducing Thirdspace</h4>
-          <h2 class="text-[40px] mb-16 font-bold leading-[49px]">presto chango you now have a friendo</h2>
+          <h2 class="text-[40px] mb-16 font-bold leading-[49px]">presto chango now you have a friendo</h2>
           
           <form class="flex flex-col text-dark-charcoal">
             <input 
