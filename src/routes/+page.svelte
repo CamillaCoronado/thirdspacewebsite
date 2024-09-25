@@ -20,10 +20,10 @@
   }
   </script>
   
-  <main class="bg-indigo text-white px-16 pt-16">
+  <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
     <!-- Navigation -->
-    <header class="flex justify-between flex-col md:flex-row items-center mb-16 md:mb-64">
-      <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a>
+    <header class="flex justify-between flex-col md:flex-row items-center mb-32 md:mb-64">
+      <!-- <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a> -->
       <img src="../src/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1">
     </header>
   
@@ -55,7 +55,7 @@
           <a href="/waitlist-check" class="underline text-white mt-[-8px] block text-center mb-32">Already joined? Check waitlist number.</a>
         </div>
         {:else}
-        <div class="bg-indigo text-white rounded-lg text-left">
+        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
           <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get one month premium free.</p>
         
