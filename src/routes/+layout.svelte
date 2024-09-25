@@ -1,5 +1,6 @@
 <script>
-    import '../app.css';  </script>  
-  <main>
-    <slot></slot>
-  </main>
+    import '../app.css';
+</script>  
+<main class="bg-indigo">
+  <slot></slot>
+</main>
