@@ -53,12 +53,14 @@ body {
     font-family: 'Montserrat', sans-serif;
 	line-height: 1;
 	font-size:18px;
+	letter-spacing: 0.1em;
 }
 
 h2 {
     font-size:40px;
     color: white;
-	letter-spacing: 0.007em;
+	letter-spacing: 0.1em;
+	line-height: 49px;
 }
 
 .btn {
