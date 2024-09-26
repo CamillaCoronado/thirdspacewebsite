@@ -153,6 +153,7 @@ export const getReferralCount = async () => {
       showNewBlock = "waitlist check success";
       break;
     case 'initial':
+      clearAllTextInputs();
       showNewBlock = "initial";
       break;
     default:
@@ -247,6 +248,14 @@ $: phone = formatPhoneNumber(phone);
       return `(${inputValue.slice(0, 3)}) ${inputValue.slice(3, 6)}-${inputValue.slice(6, 10)}`;
     }
   }
+
+  function clearAllTextInputs(): void {
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[type="text"], input[type="tel"]');  // Select only text and tel input elements
+
+  inputs.forEach((input) => {
+    input.value = '';  // Clear the value of each text and tel input
+  });
+}
 </script>
   
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
@@ -339,7 +348,7 @@ $: phone = formatPhoneNumber(phone);
         </form>
         {:else if showNewBlock == "waitlist check success"}
         <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
-          <h2 class="font-bold mb-16">Yay! You're {populateWaitlistInfo} on the waitlist.</h2>
+          <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get one month premium free.</p>
         
           <div class="flex justify-center items-center mb-16 space-x-2">
