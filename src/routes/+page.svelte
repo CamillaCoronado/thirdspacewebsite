@@ -144,6 +144,7 @@ export const getReferralCount = async () => {
     case 'waitlistSuccess':
       displayWaitlistInfo();
       showNewBlock = "waitlist success";
+      clearAllTextInputs();
       break;
     case 'waitlistCheck':
       showNewBlock = "waitlist check";
@@ -151,9 +152,9 @@ export const getReferralCount = async () => {
     case 'waitlistCheckSuccess':
       displayWaitlistInfo();
       showNewBlock = "waitlist check success";
+      clearAllTextInputs();
       break;
     case 'initial':
-      clearAllTextInputs();
       showNewBlock = "initial";
       break;
     default:
@@ -250,14 +251,11 @@ $: phone = formatPhoneNumber(phone);
   }
 
   function clearAllTextInputs(): void {
-  const inputs = document.querySelectorAll<HTMLInputElement>('input[type="text"], input[type="tel"]');  // Select only text and tel input elements
-
-  inputs.forEach((input) => {
-    input.value = '';  // Clear the value of each text and tel input
-  });
+    phone = '';
+    email = '';
 }
 </script>
-  
+  <!-- <button class=" bg-white" on:click={() => clearAllTextInputs()}>button</button> -->
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
     <!-- Navigation -->
     <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32 md:mb-64">
