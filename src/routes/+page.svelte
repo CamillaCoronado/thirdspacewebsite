@@ -9,6 +9,7 @@
 
   let showNewBlock: string = "initial";
   let authError: string = "";
+  let uniqueID: string | null = '';
 
 export const handleReferral = async (uniqueID: string) => {
   const referrerRef = doc(firestore, 'waitlist', uniqueID);
@@ -35,7 +36,7 @@ const handleSubmit = async (e: Event) => {
 
     // Check for a referral in the URL (if a uniqueID is present)
     const urlParams = new URLSearchParams(window.location.search);
-    const uniqueID = urlParams.get('referral'); // Assuming the referrer's unique ID is passed as a query param
+    uniqueID = urlParams.get('referral');
 
     if (uniqueID) {
       // Handle referral if there is a uniqueID
@@ -429,9 +430,32 @@ export function handleError(errorMessage: string): void {
         
           <!-- Social media icons -->
           <div class="flex justify-center gap-[16px] mb-8">
-            <a href="#" class="block"><img src="../src/assets/instagram-logo.png" alt="Instagram" class="w-10 h-10" /></a>
-            <a href="#" class="block"><img src="../src/assets/twitter-logo.png" alt="X (Twitter)" class="w-10 h-10" /></a>
-            <a href="#" class="block"><img src="../src/assets/facebook-logo.png" alt="Facebook" class="w-10 h-10" /></a>
+            <a 
+              href="https://www.instagram.com/jointhirdspace/"
+              target="_blank"
+              class="block">
+                <img 
+                  src="../src/assets/instagram-logo.png"
+                  alt="Instagram"
+                  class="w-10 h-10" />
+            </a>
+            <a 
+            href="https://twitter.com/JoinThirdSpace"
+            target="_blank"
+            class="block">
+              <img src="../src/assets/twitter-logo.png"
+                alt="X (Twitter)"
+                class="w-10 h-10" />
+            </a>
+            <a 
+              href="https://www.tiktok.com/@jointhirdspace?_t=8q8Z1ft62Tn&_r=1"
+              target="_blank"
+              class="block">
+                <img 
+                  src="../src/assets/tiktok-logo.png" 
+                  alt="tiktok" 
+                  class="w-10 h-10" />
+            </a>
           </div>
         
           <!-- Waitlist Number -->
@@ -444,7 +468,6 @@ export function handleError(errorMessage: string): void {
             type="email" 
             placeholder="Email" 
             bind:value={email} 
-            required
             class="mb-8 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
           />
           <p class="mb-8 bold-text text-white text-lg text-center">Or</p>
@@ -481,9 +504,32 @@ export function handleError(errorMessage: string): void {
         
           <!-- Social media icons -->
           <div class="flex justify-center gap-[16px] mb-8">
-            <a href="#" class="block"><img src="../src/assets/instagram-logo.png" alt="Instagram" class="w-10 h-10" /></a>
-            <a href="#" class="block"><img src="../src/assets/twitter-logo.png" alt="X (Twitter)" class="w-10 h-10" /></a>
-            <a href="#" class="block"><img src="../src/assets/facebook-logo.png" alt="Facebook" class="w-10 h-10" /></a>
+            <a 
+              href="https://www.instagram.com/jointhirdspace/"
+              target="_blank"
+              class="block">
+                <img 
+                  src="../src/assets/instagram-logo.png"
+                  alt="Instagram"
+                  class="w-10 h-10" />
+            </a>
+            <a 
+            href="https://twitter.com/JoinThirdSpace"
+            target="_blank"
+            class="block">
+              <img src="../src/assets/twitter-logo.png"
+                alt="X (Twitter)"
+                class="w-10 h-10" />
+            </a>
+            <a 
+              href="https://www.tiktok.com/@jointhirdspace?_t=8q8Z1ft62Tn&_r=1"
+              target="_blank"
+              class="block">
+                <img 
+                  src="../src/assets/tiktok-logo.png" 
+                  alt="tiktok" 
+                  class="w-10 h-10" />
+            </a>
           </div>
         </div>
         {/if}
