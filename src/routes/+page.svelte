@@ -2,21 +2,21 @@
   import { firestore } from '$lib/utils/firebaseSetup';
   import { collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, updateDoc, increment } from 'firebase/firestore';
   import { v4 as uuidv4 } from 'uuid';
-
   let email = '';
   let phone = '';
   let waitlistLink: string = "";
   let populateWaitlistInfo: number;
 
   let showNewBlock: string = "initial";
+  let authError: string = "";
 
-    
 export const handleReferral = async (uniqueID: string) => {
   const referrerRef = doc(firestore, 'waitlist', uniqueID);
+  incrementReferralCount(uniqueID);
 };
 
 
-  const handleSubmit = async (e: Event) => {
+const handleSubmit = async (e: Event) => {
   e.preventDefault();
   
   try {
@@ -24,9 +24,14 @@ export const handleReferral = async (uniqueID: string) => {
     const result = await addToWaitlist(email, phone);
 
     // Handle waitlist success
+    if (result) {
+    // Handle waitlist success if the result is successful
     handleWaitlistAction("waitlistSuccess");
-    const success = true;
-    console.log("Successfully added to waitlist:", result);
+  } else {
+    // If addToWaitlist didn't succeed, return early
+    console.error("Failed to add to waitlist");
+    return;
+  }
 
     // Check for a referral in the URL (if a uniqueID is present)
     const urlParams = new URLSearchParams(window.location.search);
@@ -35,7 +40,6 @@ export const handleReferral = async (uniqueID: string) => {
     if (uniqueID) {
       // Handle referral if there is a uniqueID
       await handleReferral(uniqueID);
-      console.log("Referral processed for ID:", uniqueID);
     }
 
   } catch (error) {
@@ -49,36 +53,28 @@ export const handleReferral = async (uniqueID: string) => {
 const getNextWaitlistNumber = async () => {
   try {
     // Step 1: Log when the function starts
-    console.log("getNextWaitlistNumber called");
 
     const metaDocRef = doc(firestore, 'meta', 'waitlistTracker');
-    console.log("metaDocRef created:", metaDocRef.path);
 
     // Step 2: Try to get the document from Firestore
     const metaDoc = await getDoc(metaDocRef);
-    console.log("metaDoc fetched:", metaDoc.exists() ? "Document exists" : "Document does not exist");
 
     // Step 3: Check if the document exists and log the current data
     if (metaDoc.exists()) {
       const data = metaDoc.data();
-      console.log("Document data:", data);
 
       const currentNumber = data?.currentWaitlistNumber || 0;
-      console.log("Current waitlist number:", currentNumber);
 
       // Step 4: Update the document with the new waitlist number
       await updateDoc(metaDocRef, {
         currentWaitlistNumber: currentNumber + 1,
       });
-      console.log("Waitlist number incremented to:", currentNumber + 1);
 
       return currentNumber + 1;
     } else {
       // Step 5: Handle case where the document doesn't exist
-      console.log("Document does not exist, creating it with currentWaitlistNumber set to 1");
 
       await setDoc(metaDocRef, { currentWaitlistNumber: 1 });
-      console.log("Document created with waitlist number 1");
 
       return 1;
     }
@@ -89,10 +85,48 @@ const getNextWaitlistNumber = async () => {
   }
 };
 
-  export const incrementReferralCount = async (uniqueId: string) => {
+const recalculateWaitlistPositions = async () => {
   try {
     const waitlistRef = collection(firestore, 'waitlist');
-    const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/invite?referral=${uniqueId}`));
+    const querySnapshot = await getDocs(waitlistRef);
+
+    const calculateNewPosition = (originalPosition: number, referralCount: number) => {
+      const thresholds = [
+        { maxPos: 50, divisor: 1 },
+        { maxPos: 20, divisor: 2 },
+        { maxPos: 10, divisor: 3 },
+        { maxPos: 0, divisor: 5 } // For positions less than 10
+      ];
+
+      // Find the threshold based on the original position
+      const { divisor } = thresholds.find(t => originalPosition > t.maxPos) || { divisor: 1 };
+      return Math.max(1, originalPosition - Math.floor(referralCount / divisor));
+    };
+
+    const waitlistUsers = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      original_position: doc.data().waitlist_number || 0,
+      referral_count: doc.data().referral_count || 0,
+      new_position: calculateNewPosition(doc.data().waitlist_number || 0, doc.data().referral_count || 0)
+    })).sort((a, b) => a.new_position - b.new_position);
+
+    await Promise.all(
+  waitlistUsers.map(user => {
+    console.log('Updating waitlist number to:', user.new_position); // Log the new position
+    return updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.new_position }); // Return the promise
+  })
+);
+
+  } catch (error) {
+    console.error('Error recalculating waitlist positions:', error);
+  }
+};
+
+export const incrementReferralCount = async (uniqueId: string) => {
+  try {
+    const waitlistRef = collection(firestore, 'waitlist');
+    // const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueId}`));
+    const q = query(waitlistRef, where('unique_link', '==', `http://localhost:5173/?referral=${uniqueId}`));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -100,6 +134,7 @@ const getNextWaitlistNumber = async () => {
       await updateDoc(docRef, {
         referral_count: increment(1),
       });
+      await recalculateWaitlistPositions();
     }
   } catch (error) {
     console.error('Error updating referral count: ', error);
@@ -115,7 +150,8 @@ export const getReferralCount = async () => {
     const uniqueID = urlParams.get('referral');
 
     // Query to find the document by unique_link
-    const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/invite?referral=${uniqueID}`));
+    // const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueID}`));
+    const q = query(waitlistRef, where('unique_link', '==', `http://localhost:5173/?referral=${uniqueId}`));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -124,7 +160,6 @@ export const getReferralCount = async () => {
       const userData = userDoc.data();
       
       // Return the referral_count
-      console.log("referral count: " + userData.referral_count);
       return userData.referral_count;
     } else {
       throw new Error('Document not found');
@@ -135,24 +170,36 @@ export const getReferralCount = async () => {
   }
 };
 
-  function handleWaitlistAction(action: string) {
+const handleWaitlistAction = async (action: string) => {
   switch (action) {
     case 'copyToClipboard':
       navigator.clipboard.writeText(waitlistLink);
       alert("Link copied to clipboard!"); // Optional alert
       break;
     case 'waitlistSuccess':
-      displayWaitlistInfo();
+      await displayWaitlistInfo(); 
       showNewBlock = "waitlist success";
       clearAllTextInputs();
+      clearErrors();
       break;
     case 'waitlistCheck':
       showNewBlock = "waitlist check";
+      clearAllTextInputs();
+      clearErrors();
       break;
     case 'waitlistCheckSuccess':
-      displayWaitlistInfo();
+      const success = await displayWaitlistInfo();
+
+      // Check if the function returned false and exit the case early
+      if (!success) {
+          console.error("Failed to display waitlist info, stopping further execution.");
+          break;  // Exit the case early
+      }
+
+      // If success is true, continue with the rest of the logic
       showNewBlock = "waitlist check success";
       clearAllTextInputs();
+      clearErrors();
       break;
     case 'initial':
       showNewBlock = "initial";
@@ -160,41 +207,60 @@ export const getReferralCount = async () => {
     default:
       console.error("Unknown action");
   }
-}
+};
 
 const generateUniqueLink = (): string => {
   const uniqueId = uuidv4();
-  return `https://jointhirdspace.com/invite?referral=${uniqueId}`;
+  // return `https://jointhirdspace.com/?referral=${uniqueId}`;
+  return `http://localhost:5173/?referral=${uniqueId}`;
 };
 
-export const addToWaitlist = async (email: string, phone: string) => {
+export const addToWaitlist = async (email?: string, phone?: string) => {
   try {
-    const uniqueLink = generateUniqueLink();
+    // Ensure that at least one of email or phone is provided
+    if (!email && !phone)  {
+      handleError("Please provide email or phone number to join the waitlist.")
+      return false;
+    }
+
+    if (email && !validateEmail(email)) return false;
+
     const waitlistRef = collection(firestore, 'waitlist');
+    
+    const uniqueLink = generateUniqueLink();
     const waitlistNumber = await getNextWaitlistNumber();
     const referralCount = 0;
-    await addDoc(waitlistRef, {
-      email: email,
-      phone: phone,
+
+    // Create the data object and include fields conditionally
+    const data: Partial<{ email: string; phone: string; waitlist_number: number; unique_link: string; referral_count: number; }> = {
       waitlist_number: waitlistNumber,
       unique_link: uniqueLink,
       referral_count: referralCount,
-    });
-    console.log('Document successfully written!');
-    return true; // Indicate success
+    };
+    
+    if (email) data.email = email;
+    if (phone) data.phone = phone;
+
+    // Add new user to the waitlist
+    await addDoc(waitlistRef, data);
+
+    return true;
   } catch (error) {
     console.error('Error writing document: ', error);
-    throw error; // Re-throw the error to be caught by handleSubmit
+    throw error;
   }
 };
 
-export const getWaitlistInfo = async (email: string, phone: string) => {
+export const getWaitlistInfo = async (email?: string, phone?: string) => {
   try {
+
+    if (!email && !phone) {
+      handleError("Either email or phone must be provided.");
+      return false;
+    }
     // Query Firestore to find the user by email or phone
     const waitlistRef = collection(firestore, 'waitlist');
     const q = email ? query(waitlistRef, where('email', '==', email)) : query(waitlistRef, where('phone', '==', phone));
-    console.log("email: " + email);
-    console.log("phone: " + phone);
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
@@ -213,24 +279,32 @@ export const getWaitlistInfo = async (email: string, phone: string) => {
     }
   } catch (error) {
     console.error('Error retrieving waitlist info:', error);
-    throw error;  // Handle the error in the calling code if needed
+    handleError("Email or phone number not found.") // Handle the error in the calling code if needed
+    return false;
   }
 };
 
-const displayWaitlistInfo = async () => {
+const displayWaitlistInfo = async (): Promise<boolean> => {
   try {
-    const { uniqueUrl, waitlistNumber } = await getWaitlistInfo(email, phone);
-    
-    // Populate the UI with the waitlist info
-    console.log('Unique URL:', uniqueUrl);
-    console.log('Waitlist Number:', waitlistNumber);
+    const result = await getWaitlistInfo(email, phone);
 
-    // You can now insert these values into the HTML or Svelte component
+    // Check if result is false, if so, handle the error
+    if (!result) {
+      handleError('Error: No waitlist info found');
+      return false;
+    }
+
+    // Destructure the result since it's no longer false
+    const { uniqueUrl, waitlistNumber } = result;
+
     populateWaitlistInfo = waitlistNumber;
-    waitlistLink= uniqueUrl;
+    waitlistLink = uniqueUrl;
   } catch (error) {
-    console.error('Error displaying waitlist info:', error);
+    handleError('Error displaying waitlist info');
+    return false;
   }
+
+  return true;
 };
 
 $: phone = formatPhoneNumber(phone);
@@ -250,10 +324,48 @@ $: phone = formatPhoneNumber(phone);
     }
   }
 
-  function clearAllTextInputs(): void {
-    phone = '';
-    email = '';
+function clearAllTextInputs(): void {
+  phone = '';
+  email = '';
 }
+
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,63}$/;
+  const parts = email.split('@');
+  const domainParts = parts.length === 2 ? parts[1].split('.') : [];
+  const tld = domainParts[domainParts.length - 1]?.toLowerCase();
+  const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'io', 'co', 'uk', 'de', 'fr', 'jp', 'au', 'nz'];
+
+  if (
+    !emailRegex.test(email) || 
+    email.length > 254 || 
+    parts.length !== 2 || 
+    parts[0].length === 0 || 
+    parts[0].length > 64 || 
+    domainParts.length < 2 || 
+    !validTLDs.includes(tld)
+  ) {
+    
+    handleError("Invalid email format");
+    return false;
+  }
+
+  clearErrors();
+  return true;
+}
+
+export function clearErrors(): void {
+  authError = '';
+}
+
+export function handleError(errorMessage: string): void { 
+  const errorElement = document.querySelector('.error-message');
+  if (errorElement) {
+    errorElement.classList.add('error');
+  }
+  authError = errorMessage;
+}
+
 </script>
   <!-- <button class=" bg-white" on:click={() => clearAllTextInputs()}>button</button> -->
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
@@ -288,8 +400,9 @@ $: phone = formatPhoneNumber(phone);
               bind:value={phone} 
               class="mb-8 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
             />
-            <p class="text-sm mb-16 bold-text text-white">We’ll only use your phone number to send a one-time text with the launch link. No spam, no sharing.</p>
+            <p class="text-sm mb-16 bold-text text-white">(Optional) We’ll only use your phone number to send a one-time text with the launch link. No spam, no sharing.</p>
             <button type=submit class="bold-text bg-white text-indigo text-bold btn w-full rounded-full py-12">Join waitlist</button>
+            <p class= "error-message">{authError}</p>
           </form>
           
           <button on:click={() => handleWaitlistAction("waitlistCheck")} class="underline bold-text text-sm text-white mt-[-8px] block text-center mb-32">Already joined? Check waitlist number.<button/>
@@ -297,13 +410,13 @@ $: phone = formatPhoneNumber(phone);
         {:else if showNewBlock == "waitlist success"}
         <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
           <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>
-          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get one month premium free.</p>
+          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months of premium free!</p>
         
           <div class="flex justify-center items-center mb-16 space-x-2">
             <!-- Input field -->
             <input 
               type="text" 
-              placeholder="https://jointthirdspace.com/fakeyfake"
+              placeholder="ERROR"
               bind:value={waitlistLink}
               readonly 
               class="unique-url text-xl block w-full px-8 py-8 border-2 border-medium-indigo text-dark-charcoal rounded-md"
@@ -331,6 +444,7 @@ $: phone = formatPhoneNumber(phone);
             type="email" 
             placeholder="Email" 
             bind:value={email} 
+            required
             class="mb-8 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
           />
           <p class="mb-8 bold-text text-white text-lg text-center">Or</p>
@@ -342,12 +456,13 @@ $: phone = formatPhoneNumber(phone);
             class="unique-url mb-16 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
           />
           <button on:click={() => handleWaitlistAction("waitlistCheckSuccess")} class="bold-text bg-white text-indigo text-bold btn w-full rounded-full py-12">Check waitlist</button>
+          <p class= "error-message">{authError}</p>
           <button on:click={() => handleWaitlistAction("initial")} class="text-base block underline text-white text-left mt-[-8px] bold-text">Join waitlist</button>
         </form>
         {:else if showNewBlock == "waitlist check success"}
         <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
           <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>
-          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get one month premium free.</p>
+          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months premium free!</p>
         
           <div class="flex justify-center items-center mb-16 space-x-2">
             <!-- Input field -->

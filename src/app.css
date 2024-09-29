@@ -75,10 +75,30 @@ a {
 	@apply text-indigo underline text-sm font-bold;
 }
 
-.error-message {
+.error.error {
+	@apply border-red-error;
+}
+
+.error {
 	@apply text-sm;
 	position: relative;
-	bottom:12px;
+	@apply bg-red-error;
+	color: white;
+	margin-bottom: 16px;
+	padding: 8px;
+	border-radius: 6px;
+
+}
+
+.error:before {
+	content:"";
+	display: inline-block;
+	background-image: url("assets/error-icon.png");
+	background-size:contain;
+	width:20px;
+	height:20px;
+	vertical-align: middle;
+	margin-right:16px;
 }
 
 .bold-text {

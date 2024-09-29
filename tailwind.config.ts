@@ -29,6 +29,7 @@ export default {
         // Medium colors
         'pink': '#CD93F1',
         'medium-indigo': '#7065DF',
+        'red-error': "#FE1D0E",
 
         // Dark colors
         'indigo': '#6A2AF8',
