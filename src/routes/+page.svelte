@@ -21,30 +21,23 @@ const handleSubmit = async (e: Event) => {
   e.preventDefault();
   
   try {
-    // Add user to waitlist
     const result = await addToWaitlist(email, phone);
 
-    // Handle waitlist success
     if (result) {
-    // Handle waitlist success if the result is successful
     handleWaitlistAction("waitlistSuccess");
   } else {
-    // If addToWaitlist didn't succeed, return early
     console.error("Failed to add to waitlist");
     return;
   }
 
-    // Check for a referral in the URL (if a uniqueID is present)
     const urlParams = new URLSearchParams(window.location.search);
     uniqueID = urlParams.get('referral');
 
     if (uniqueID) {
-      // Handle referral if there is a uniqueID
       await handleReferral(uniqueID);
     }
 
   } catch (error) {
-    // Handle error if addToWaitlist fails
     console.error("Error adding to waitlist:", error);
     const success = false;
   }
@@ -53,34 +46,23 @@ const handleSubmit = async (e: Event) => {
 
 const getNextWaitlistNumber = async () => {
   try {
-    // Step 1: Log when the function starts
-
     const metaDocRef = doc(firestore, 'meta', 'waitlistTracker');
-
-    // Step 2: Try to get the document from Firestore
     const metaDoc = await getDoc(metaDocRef);
 
-    // Step 3: Check if the document exists and log the current data
     if (metaDoc.exists()) {
       const data = metaDoc.data();
-
       const currentNumber = data?.currentWaitlistNumber || 0;
 
-      // Step 4: Update the document with the new waitlist number
       await updateDoc(metaDocRef, {
         currentWaitlistNumber: currentNumber + 1,
       });
 
       return currentNumber + 1;
     } else {
-      // Step 5: Handle case where the document doesn't exist
-
       await setDoc(metaDocRef, { currentWaitlistNumber: 1 });
-
       return 1;
     }
   } catch (error) {
-    // Step 6: Log any errors
     console.error("Error in getNextWaitlistNumber:", error);
     throw error;
   }
@@ -96,10 +78,8 @@ const recalculateWaitlistPositions = async () => {
         { maxPos: 50, divisor: 1 },
         { maxPos: 20, divisor: 2 },
         { maxPos: 10, divisor: 3 },
-        { maxPos: 0, divisor: 5 } // For positions less than 10
+        { maxPos: 0, divisor: 5 }
       ];
-
-      // Find the threshold based on the original position
       const { divisor } = thresholds.find(t => originalPosition > t.maxPos) || { divisor: 1 };
       return Math.max(1, originalPosition - Math.floor(referralCount / divisor));
     };
@@ -113,8 +93,8 @@ const recalculateWaitlistPositions = async () => {
 
     await Promise.all(
   waitlistUsers.map(user => {
-    console.log('Updating waitlist number to:', user.new_position); // Log the new position
-    return updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.new_position }); // Return the promise
+    console.log('Updating waitlist number to:', user.new_position);
+    return updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.new_position });
   })
 );
 
@@ -126,8 +106,8 @@ const recalculateWaitlistPositions = async () => {
 export const incrementReferralCount = async (uniqueId: string) => {
   try {
     const waitlistRef = collection(firestore, 'waitlist');
-    // const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueId}`));
-    const q = query(waitlistRef, where('unique_link', '==', `http://localhost:5173/?referral=${uniqueId}`));
+    const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueId}`));
+    // const q = query(waitlistRef, where('unique_link', '==', `http://localhost:5173/?referral=${uniqueId}`));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -145,29 +125,24 @@ export const incrementReferralCount = async (uniqueId: string) => {
 
 export const getReferralCount = async () => {
   try {
-    // Reference to the 'waitlist' collection
     const waitlistRef = collection(firestore, 'waitlist');
     const urlParams = new URLSearchParams(window.location.search);
     const uniqueID = urlParams.get('referral');
 
-    // Query to find the document by unique_link
-    // const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueID}`));
-    const q = query(waitlistRef, where('unique_link', '==', `http://localhost:5173/?referral=${uniqueId}`));
+    const q = query(waitlistRef, where('unique_link', '==', `https://jointhirdspace.com/?referral=${uniqueID}`));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // Retrieve the referral_count from the first matching document
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
       
-      // Return the referral_count
       return userData.referral_count;
     } else {
       throw new Error('Document not found');
     }
   } catch (error) {
     console.error('Error getting referral count: ', error);
-    throw error;  // Re-throw the error to be handled by the calling code
+    throw error;
   }
 };
 
@@ -175,7 +150,7 @@ const handleWaitlistAction = async (action: string) => {
   switch (action) {
     case 'copyToClipboard':
       navigator.clipboard.writeText(waitlistLink);
-      alert("Link copied to clipboard!"); // Optional alert
+      alert("Link copied to clipboard!");
       break;
     case 'waitlistSuccess':
       await displayWaitlistInfo(); 
@@ -191,13 +166,11 @@ const handleWaitlistAction = async (action: string) => {
     case 'waitlistCheckSuccess':
       const success = await displayWaitlistInfo();
 
-      // Check if the function returned false and exit the case early
       if (!success) {
           console.error("Failed to display waitlist info, stopping further execution.");
-          break;  // Exit the case early
+          break;
       }
 
-      // If success is true, continue with the rest of the logic
       showNewBlock = "waitlist check success";
       clearAllTextInputs();
       clearErrors();
@@ -212,13 +185,12 @@ const handleWaitlistAction = async (action: string) => {
 
 const generateUniqueLink = (): string => {
   const uniqueId = uuidv4();
-  // return `https://jointhirdspace.com/?referral=${uniqueId}`;
-  return `http://localhost:5173/?referral=${uniqueId}`;
+  return `https://jointhirdspace.com/?referral=${uniqueId}`;
+  // return `http://localhost:5173/?referral=${uniqueId}`;
 };
 
 export const addToWaitlist = async (email?: string, phone?: string) => {
   try {
-    // Ensure that at least one of email or phone is provided
     if (!email && !phone)  {
       handleError("Please provide email or phone number to join the waitlist.")
       return false;
@@ -232,7 +204,6 @@ export const addToWaitlist = async (email?: string, phone?: string) => {
     const waitlistNumber = await getNextWaitlistNumber();
     const referralCount = 0;
 
-    // Create the data object and include fields conditionally
     const data: Partial<{ email: string; phone: string; waitlist_number: number; unique_link: string; referral_count: number; }> = {
       waitlist_number: waitlistNumber,
       unique_link: uniqueLink,
@@ -242,7 +213,6 @@ export const addToWaitlist = async (email?: string, phone?: string) => {
     if (email) data.email = email;
     if (phone) data.phone = phone;
 
-    // Add new user to the waitlist
     await addDoc(waitlistRef, data);
 
     return true;
@@ -259,21 +229,17 @@ export const getWaitlistInfo = async (email?: string, phone?: string) => {
       handleError("Either email or phone must be provided.");
       return false;
     }
-    // Query Firestore to find the user by email or phone
     const waitlistRef = collection(firestore, 'waitlist');
     const q = email ? query(waitlistRef, where('email', '==', email)) : query(waitlistRef, where('phone', '==', phone));
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
-      // Assuming only one document matches, get the first result
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
 
-      // Extract the unique URL and waitlist number
       const uniqueUrl = userData.unique_link;
       const waitlistNumber = userData.waitlist_number;
 
-      // Return the data to be used in the UI
       return { uniqueUrl, waitlistNumber };
     } else {
       throw new Error('User not found');
@@ -370,19 +336,19 @@ export function handleError(errorMessage: string): void {
 </script>
   <!-- <button class=" bg-white" on:click={() => clearAllTextInputs()}>button</button> -->
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
-    <!-- Navigation -->
     <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32 md:mb-64">
       <!-- <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a> -->
       <button on:click={() => handleWaitlistAction("initial")}>
         <img src="../src/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
       </button>
     </header>
-  
-    <!-- Main Section -->
     <section class="flex flex-col items-center">
       <div class="mb-32 flex flex-col lg:flex-row lg:justify-center items-center w-full gap-[32px] md:gap-[16px]">
-        {#if showNewBlock == "initial"} <!-- Right: Waitlist Form -->
-        <div class="text-white rounded-lg w-full max-w-lg flex-col">
+        <div class="text-white rounded-lg w-full max-w-lg flex-col transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+          class:opacity-100={showNewBlock == 'initial'}
+          class:opacity-0={showNewBlock != 'initial'}
+          class:h-auto={showNewBlock == 'initial'}
+          class:h-0={showNewBlock != 'initial'}>
           <h4 class="text-2xl font-bold mb-8 uppercase hidden md:block">Introducing Thirdspace</h4>
           <h2 class="text-[40px] mb-16 font-bold leading-[49px]">presto chango now you have a friendo</h2>
           
@@ -408,13 +374,15 @@ export function handleError(errorMessage: string): void {
           
           <button on:click={() => handleWaitlistAction("waitlistCheck")} class="underline bold-text text-sm text-white mt-[-8px] block text-center mb-32">Already joined? Check waitlist number.<button/>
         </div>
-        {:else if showNewBlock == "waitlist success"}
-        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
+        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+          class:opacity-100={showNewBlock == 'waitlist success'}
+          class:opacity-0={showNewBlock != 'waitlist success'}
+          class:h-auto={showNewBlock == 'waitlist success'}
+          class:h-0={showNewBlock != 'waitlist success'}>
           <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months of premium free!</p>
         
           <div class="flex justify-center items-center mb-16 space-x-2">
-            <!-- Input field -->
             <input 
               type="text" 
               placeholder="ERROR"
@@ -422,13 +390,10 @@ export function handleError(errorMessage: string): void {
               readonly 
               class="unique-url text-xl block w-full px-8 py-8 border-2 border-medium-indigo text-dark-charcoal rounded-md"
             />
-            <!-- Copy button (icon) -->
             <button on:click={() => handleWaitlistAction("copyToClipboard")}>
               <img src="../src/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-        
-          <!-- Social media icons -->
           <div class="flex justify-center gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
@@ -461,8 +426,11 @@ export function handleError(errorMessage: string): void {
           <!-- Waitlist Number -->
           <p class="text-base text-center bold-text">Waitlist Number: {populateWaitlistInfo}</p>
         </div>
-        {:else if showNewBlock == "waitlist check"}
-        <form class="flex flex-col max-w-lg text-dark-charcoal">
+        <form class="flex flex-col max-w-lg text-dark-charcoal transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+          class:opacity-100={showNewBlock == 'waitlist check'}
+          class:opacity-0={showNewBlock != 'waitlist check'}
+          class:h-auto={showNewBlock == 'waitlist check'}
+          class:h-0={showNewBlock != 'waitlist check'}>
           <p class="mb-16 bold-text text-lg text-white">Please provide the email or phone number you joined with.</p>
           <input 
             type="email" 
@@ -482,27 +450,26 @@ export function handleError(errorMessage: string): void {
           <p class= "error-message">{authError}</p>
           <button on:click={() => handleWaitlistAction("initial")} class="text-base block underline text-white text-left mt-[-8px] bold-text">Join waitlist</button>
         </form>
-        {:else if showNewBlock == "waitlist check success"}
-        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left">
+        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+          class:opacity-100={showNewBlock == 'waitlist check success'}
+          class:opacity-0={showNewBlock != 'waitlist check success'}
+          class:h-auto={showNewBlock == 'waitlist check success'}
+          class:h-0={showNewBlock != 'waitlist check success'}>
           <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months premium free!</p>
         
           <div class="flex justify-center items-center mb-16 space-x-2">
-            <!-- Input field -->
             <input 
               type="text" 
-              placeholder="https://jointthirdspace.com/somequ"
+              placeholder="ERROR"
               bind:value={waitlistLink}
               readonly 
               class="text-xl block w-full px-8 py-8 border-2 border-medium-indigo text-dark-charcoal rounded-md"
             />
-            <!-- Copy button (icon) -->
             <button on:click={() => handleWaitlistAction("copyToClipboard")}>
               <img src="../src/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-        
-          <!-- Social media icons -->
           <div class="flex justify-center gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
@@ -532,7 +499,6 @@ export function handleError(errorMessage: string): void {
             </a>
           </div>
         </div>
-        {/if}
         <div class="flex flex-row flex-wrap md:flex-row justify-center items-start mb-16 lg:mb-0">
           <img src="../src/assets/onboarding-page-1.png" alt="Map your path" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
           <img src="../src/assets/onboarding-page-2.png" alt="Instant Match" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
@@ -543,6 +509,7 @@ export function handleError(errorMessage: string): void {
       </div>
     </section>
   </main>
-  <img src="../src/assets/astronaut.png" alt="Astronaut" class="astronaut transition duration-1000 ease-in-out object-contain h-[78px] w-[59px]">
+  <img src="../src/assets/astronaut.png" alt="Astronaut" class="astronaut overflow-hidden object-contain h-[78px] w-[59px]"
+  >
 
   
