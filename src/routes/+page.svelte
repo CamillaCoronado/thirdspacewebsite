@@ -339,7 +339,7 @@ export function handleError(errorMessage: string): void {
     <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32 md:mb-64">
       <!-- <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a> -->
       <button on:click={() => handleWaitlistAction("initial")}>
-        <img src="../src/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
+        <img src="/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
       </button>
     </header>
     <section class="flex flex-col items-center">
@@ -391,7 +391,7 @@ export function handleError(errorMessage: string): void {
               class="unique-url text-xl block w-full px-8 py-8 border-2 border-medium-indigo text-dark-charcoal rounded-md"
             />
             <button on:click={() => handleWaitlistAction("copyToClipboard")}>
-              <img src="../src/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
+              <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
           <div class="flex justify-center gap-[16px] mb-8">
@@ -400,7 +400,7 @@ export function handleError(errorMessage: string): void {
               target="_blank"
               class="block">
                 <img 
-                  src="../src/assets/instagram-logo.png"
+                  src="/assets/instagram-logo.png"
                   alt="Instagram"
                   class="w-10 h-10" />
             </a>
@@ -408,7 +408,7 @@ export function handleError(errorMessage: string): void {
             href="https://twitter.com/JoinThirdSpace"
             target="_blank"
             class="block">
-              <img src="../src/assets/twitter-logo.png"
+              <img src="/assets/twitter-logo.png"
                 alt="X (Twitter)"
                 class="w-10 h-10" />
             </a>
@@ -417,7 +417,7 @@ export function handleError(errorMessage: string): void {
               target="_blank"
               class="block">
                 <img 
-                  src="../src/assets/tiktok-logo.png" 
+                  src="/assets/tiktok-logo.png" 
                   alt="tiktok" 
                   class="w-10 h-10" />
             </a>
@@ -467,7 +467,7 @@ export function handleError(errorMessage: string): void {
               class="text-xl block w-full px-8 py-8 border-2 border-medium-indigo text-dark-charcoal rounded-md"
             />
             <button on:click={() => handleWaitlistAction("copyToClipboard")}>
-              <img src="../src/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
+              <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
           <div class="flex justify-center gap-[16px] mb-8">
@@ -476,7 +476,7 @@ export function handleError(errorMessage: string): void {
               target="_blank"
               class="block">
                 <img 
-                  src="../src/assets/instagram-logo.png"
+                  src="/assets/instagram-logo.png"
                   alt="Instagram"
                   class="w-10 h-10" />
             </a>
@@ -484,7 +484,7 @@ export function handleError(errorMessage: string): void {
             href="https://twitter.com/JoinThirdSpace"
             target="_blank"
             class="block">
-              <img src="../src/assets/twitter-logo.png"
+              <img src="/assets/twitter-logo.png"
                 alt="X (Twitter)"
                 class="w-10 h-10" />
             </a>
@@ -493,23 +493,23 @@ export function handleError(errorMessage: string): void {
               target="_blank"
               class="block">
                 <img 
-                  src="../src/assets/tiktok-logo.png" 
+                  src="/assets/tiktok-logo.png" 
                   alt="tiktok" 
                   class="w-10 h-10" />
             </a>
           </div>
         </div>
         <div class="flex flex-row flex-wrap md:flex-row justify-center items-start mb-16 lg:mb-0">
-          <img src="../src/assets/onboarding-page-1.png" alt="Map your path" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
-          <img src="../src/assets/onboarding-page-2.png" alt="Instant Match" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
+          <img src="/assets/onboarding-page-1.png" alt="Map your path" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
+          <img src="/assets/onboarding-page-2.png" alt="Instant Match" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
           <div class= "grow flex justify-center">
-            <img src="../src/assets/onboarding-page-3.png" alt="Meet and Share" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px] flex-center">
+            <img src="/assets/onboarding-page-3.png" alt="Meet and Share" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px] flex-center">
           </div>
         </div>
       </div>
     </section>
   </main>
-  <img src="../src/assets/astronaut.png" alt="Astronaut" class="astronaut overflow-hidden object-contain h-[78px] w-[59px]"
+  <img src="/assets/astronaut.png" alt="Astronaut" class="astronaut overflow-hidden object-contain h-[78px] w-[59px]"
   >
 
   
