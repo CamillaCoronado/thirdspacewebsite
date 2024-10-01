@@ -93,7 +93,6 @@ const recalculateWaitlistPositions = async () => {
 
     await Promise.all(
   waitlistUsers.map(user => {
-    console.log('Updating waitlist number to:', user.new_position);
     return updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.new_position });
   })
 );
@@ -199,7 +198,7 @@ export const addToWaitlist = async (email?: string, phone?: string) => {
       return false;
     }
 
-    if (email && !validateEmail(email)) return false;
+    if ((email && !validateEmail(email)) || (phone && !validatePhone(phone))) return false;
 
     const waitlistRef = collection(firestore, 'waitlist');
     
@@ -324,6 +323,18 @@ export function validateEmail(email: string): boolean {
   return true;
 }
 
+export function validatePhone(phone: string): boolean {
+  const phonePattern = /^\d{10}$/;
+  if (!phonePattern.test(email)) {
+    handleError("Invalid phone format");
+    return false;
+  }
+  
+  clearErrors();
+  return true;
+    
+}
+
 export function clearErrors(): void {
   authError = '';
   const errorElements = document.querySelectorAll('.error-message');
@@ -409,7 +420,7 @@ export function handleError(errorMessage: string): void {
               <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-          <div class="flex justify-center lg:gap-[16px] mb-8">
+          <div class="flex justify-center gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
               target="_blank"
@@ -439,7 +450,7 @@ export function handleError(errorMessage: string): void {
           </div>
         
           <!-- Waitlist Number -->
-          <p class="text-base text-center bold-text">Waitlist Number: {populateWaitlistInfo}</p>
+          <p class="text-base text-center bold-text mb-32">Waitlist Number: {populateWaitlistInfo}</p>
         </div>
         <form class="flex flex-col w-full max-w-lg text-dark-charcoal transition-all ease-in-out overflow-hidden" 
           style="transition-property: opacity, height; transition-duration: 800ms, 100ms;"
@@ -489,7 +500,7 @@ export function handleError(errorMessage: string): void {
               <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-          <div class="flex justify-center lg:gap-[16px] mb-8">
+          <div class="flex justify-center gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
               target="_blank"
