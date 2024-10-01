@@ -153,6 +153,7 @@ const handleWaitlistAction = async (action: string) => {
       alert("Link copied to clipboard!");
       break;
     case 'waitlistSuccess':
+      clearErrors();
       await displayWaitlistInfo(); 
       showNewBlock = "waitlist success";
       clearAllTextInputs();
@@ -177,6 +178,8 @@ const handleWaitlistAction = async (action: string) => {
       break;
     case 'initial':
       showNewBlock = "initial";
+      clearAllTextInputs();
+      clearErrors();
       break;
     default:
       console.error("Unknown action");
@@ -301,7 +304,7 @@ export function validateEmail(email: string): boolean {
   const parts = email.split('@');
   const domainParts = parts.length === 2 ? parts[1].split('.') : [];
   const tld = domainParts[domainParts.length - 1]?.toLowerCase();
-  const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'io', 'co', 'uk', 'de', 'fr', 'jp', 'au', 'nz'];
+  const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'io', 'co', 'uk', 'de', 'fr', 'jp', 'au', 'nz', 'ai'];
 
   if (
     !emailRegex.test(email) || 
@@ -323,12 +326,20 @@ export function validateEmail(email: string): boolean {
 
 export function clearErrors(): void {
   authError = '';
+  const errorElements = document.querySelectorAll('.error-message');
+  if (errorElements.length) {
+    errorElements.forEach((element) => {
+      element.classList.remove('error');
+    });
+  }
 }
 
 export function handleError(errorMessage: string): void { 
-  const errorElement = document.querySelector('.error-message');
-  if (errorElement) {
-    errorElement.classList.add('error');
+  const errorElements = document.querySelectorAll('.error-message');
+  if (errorElements.length) {
+    errorElements.forEach((element) => {
+      element.classList.add('error');
+    });
   }
   authError = errorMessage;
 }
@@ -343,12 +354,14 @@ export function handleError(errorMessage: string): void {
       </button>
     </header>
     <section class="flex flex-col items-center">
-      <div class="mb-32 flex flex-col lg:flex-row lg:justify-center items-center w-full gap-[32px] md:gap-[16px]">
-        <div class="text-white rounded-lg w-full max-w-lg flex-col transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+      <div class="mb-32 flex flex-col lg:flex-row lg:justify-center items-center w-full lg:gap-[16px]">
+        <div class="text-white rounded-lg w-full max-w-lg flex-col transition-all ease-in-out overflow-hidden"
+          style="transition-property: opacity, height; transition-duration: 800ms, 100ms;"
           class:opacity-100={showNewBlock == 'initial'}
           class:opacity-0={showNewBlock != 'initial'}
           class:h-auto={showNewBlock == 'initial'}
-          class:h-0={showNewBlock != 'initial'}>
+          class:h-0={showNewBlock != 'initial'}
+          class:absolute={showNewBlock !== 'initial'}>
           <h4 class="text-2xl font-bold mb-8 uppercase hidden md:block">Introducing Thirdspace</h4>
           <h2 class="text-[40px] mb-16 font-bold leading-[49px]">presto chango now you have a friendo</h2>
           
@@ -374,11 +387,13 @@ export function handleError(errorMessage: string): void {
           
           <button on:click={() => handleWaitlistAction("waitlistCheck")} class="underline bold-text text-sm text-white mt-[-8px] block text-center mb-32">Already joined? Check waitlist number.<button/>
         </div>
-        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all ease-in-out overflow-hidden"
+          style="transition-property: opacity, height; transition-duration: 800ms, 100ms;"
           class:opacity-100={showNewBlock == 'waitlist success'}
           class:opacity-0={showNewBlock != 'waitlist success'}
           class:h-auto={showNewBlock == 'waitlist success'}
-          class:h-0={showNewBlock != 'waitlist success'}>
+          class:h-0={showNewBlock != 'waitlist success'}
+          class:absolute={showNewBlock !== 'waitlist success'}>
           <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months of premium free!</p>
         
@@ -394,7 +409,7 @@ export function handleError(errorMessage: string): void {
               <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-          <div class="flex justify-center gap-[16px] mb-8">
+          <div class="flex justify-center lg:gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
               target="_blank"
@@ -426,11 +441,13 @@ export function handleError(errorMessage: string): void {
           <!-- Waitlist Number -->
           <p class="text-base text-center bold-text">Waitlist Number: {populateWaitlistInfo}</p>
         </div>
-        <form class="flex flex-col max-w-lg text-dark-charcoal transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+        <form class="flex flex-col w-full max-w-lg text-dark-charcoal transition-all ease-in-out overflow-hidden" 
+          style="transition-property: opacity, height; transition-duration: 800ms, 100ms;"
           class:opacity-100={showNewBlock == 'waitlist check'}
           class:opacity-0={showNewBlock != 'waitlist check'}
           class:h-auto={showNewBlock == 'waitlist check'}
-          class:h-0={showNewBlock != 'waitlist check'}>
+          class:h-0={showNewBlock != 'waitlist check'}
+          class:absolute={showNewBlock !== 'waitlist check'}>
           <p class="mb-16 bold-text text-lg text-white">Please provide the email or phone number you joined with.</p>
           <input 
             type="email" 
@@ -448,13 +465,15 @@ export function handleError(errorMessage: string): void {
           />
           <button on:click={() => handleWaitlistAction("waitlistCheckSuccess")} class="bold-text bg-white text-indigo text-bold btn w-full rounded-full py-12">Check waitlist</button>
           <p class= "error-message">{authError}</p>
-          <button on:click={() => handleWaitlistAction("initial")} class="text-base block underline text-white text-left mt-[-8px] bold-text">Join waitlist</button>
+          <button on:click={() => handleWaitlistAction("initial")} class="text-base block underline text-white text-left mt-[-8px] mb-32 bold-text">Join waitlist</button>
         </form>
-        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all duration-700 ease-in-out opacity-100 h-auto overflow-hidden" 
+        <div class="bg-indigo w-full max-w-lg text-white rounded-lg text-left transition-all ease-in-out overflow-hidden"
+          style="transition-property: opacity, height; transition-duration: 800ms, 100ms;"
           class:opacity-100={showNewBlock == 'waitlist check success'}
           class:opacity-0={showNewBlock != 'waitlist check success'}
           class:h-auto={showNewBlock == 'waitlist check success'}
-          class:h-0={showNewBlock != 'waitlist check success'}>
+          class:h-0={showNewBlock != 'waitlist check success'}
+          class:absolute={showNewBlock !== 'waitlist check success'}>
           <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>
           <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months premium free!</p>
         
@@ -470,7 +489,7 @@ export function handleError(errorMessage: string): void {
               <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-          <div class="flex justify-center gap-[16px] mb-8">
+          <div class="flex justify-center lg:gap-[16px] mb-8">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
               target="_blank"
@@ -499,7 +518,9 @@ export function handleError(errorMessage: string): void {
             </a>
           </div>
         </div>
-        <div class="flex flex-row flex-wrap md:flex-row justify-center items-start mb-16 lg:mb-0">
+        <div class="flex flex-row flex-wrap md:flex-row justify-center items-start mb-16 lg:mb-0 transition-all duration-700 ease-in-out opacity-100 "
+          class:opacity-0={showNewBlock === ''}
+          class:opacity-100={showNewBlock !== ''}>
           <img src="/assets/onboarding-page-1.png" alt="Map your path" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
           <img src="/assets/onboarding-page-2.png" alt="Instant Match" class="mb-16 w-[175px] md:w-[185px] lg:w-[154px] xl:w-[197px]">
           <div class= "grow flex justify-center">
