@@ -324,8 +324,8 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  const phonePattern = /^\d{14}$/;
-  if (!phonePattern.test(email)) {
+  const phonePattern = /^[\d+\s()-]{14}$/;
+  if (!phonePattern.test(phone)) {
     handleError("Invalid phone format");
     return false;
   }
@@ -500,7 +500,7 @@ export function handleError(errorMessage: string): void {
               <img src="/assets/copy-icon.png" alt="Copy" class="w-[32px] h-[34px]" />
             </button>
           </div>
-          <div class="flex justify-center gap-[16px] mb-8">
+          <div class="flex justify-center gap-[16px] mb-32">
             <a 
               href="https://www.instagram.com/jointhirdspace/"
               target="_blank"
