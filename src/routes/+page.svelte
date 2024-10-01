@@ -191,10 +191,10 @@ const generateUniqueLink = (): string => {
   // return `http://localhost:5173/?referral=${uniqueId}`;
 };
 
-export const addToWaitlist = async (email?: string, phone?: string) => {
+export const addToWaitlist = async (email: string, phone?: string) => {
   try {
-    if (!email && !phone)  {
-      handleError("Please provide email or phone number to join the waitlist.")
+    if (!email)  {
+      handleError("Please provide email to join the waitlist.")
       return false;
     }
 
@@ -324,7 +324,7 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  const phonePattern = /^\d{10}$/;
+  const phonePattern = /^\d{14}$/;
   if (!phonePattern.test(email)) {
     handleError("Invalid phone format");
     return false;
