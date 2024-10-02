@@ -68,37 +68,54 @@ const getNextWaitlistNumber = async () => {
   }
 };
 
+interface User {
+  id: string;
+  waitlist_number: number;
+  referral_count: number;
+  isValid: boolean;
+}
+
 const recalculateWaitlistPositions = async () => {
   try {
-    const waitlistRef = collection(firestore, 'waitlist');
-    const querySnapshot = await getDocs(waitlistRef);
+    const waitlistCollection = collection(firestore, 'waitlist');
+    const querySnapshot = await getDocs(waitlistCollection);
 
-    const calculateNewPosition = (originalPosition: number, referralCount: number) => {
-      const thresholds = [
-        { maxPos: 50, divisor: 1 },
-        { maxPos: 20, divisor: 2 },
-        { maxPos: 10, divisor: 3 },
-        { maxPos: 0, divisor: 5 }
-      ];
-      const { divisor } = thresholds.find(t => originalPosition > t.maxPos) || { divisor: 1 };
-      return Math.max(1, originalPosition - Math.floor(referralCount / divisor));
-    };
+    const isValidUser = (user: User) => user.waitlist_number >= 0 && user.referral_count >= 0;
 
-    const waitlistUsers = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      original_position: doc.data().waitlist_number || 0,
-      referral_count: doc.data().referral_count || 0,
-      new_position: calculateNewPosition(doc.data().waitlist_number || 0, doc.data().referral_count || 0)
-    })).sort((a, b) => a.new_position - b.new_position);
+    // Extract and validate users
+    const users: User[] = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      const waitlist_number = typeof data.waitlist_number === 'number' ? data.waitlist_number : 0;
+      const referral_count = typeof data.referral_count === 'number' ? data.referral_count : 0;
+      return { 
+        id: doc.id, 
+        waitlist_number, 
+        referral_count, 
+        isValid: isValidUser({ waitlist_number, referral_count } as User)
+      };
+    });
 
-    await Promise.all(
-  waitlistUsers.map(user => {
-    return updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.new_position });
-  })
-);
+    // Filter valid and invalid users
+    const validUsers = users.filter(user => user.isValid);
+    const invalidUsers = users.filter(user => !user.isValid);
 
+    // Sort valid users by referral count and then by original waitlist number
+    validUsers.sort((a, b) => b.referral_count - a.referral_count || a.waitlist_number - b.waitlist_number);
+
+    // Assign new positions without gaps
+    validUsers.forEach((user, index) => { user.waitlist_number = index + 1; });
+    invalidUsers.forEach((user, index) => { user.waitlist_number = validUsers.length + index + 1; });
+
+    // Merge the lists back together and update Firestore documents
+    const allUsers = [...validUsers, ...invalidUsers];
+    const updatePromises = allUsers.map(user =>
+      updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.waitlist_number })
+    );
+
+    await Promise.all(updatePromises);
+    console.log('Waitlist recalculated successfully');
   } catch (error) {
-    console.error('Error recalculating waitlist positions:', error);
+    console.error('Error recalculating waitlist:', error);
   }
 };
 
@@ -200,6 +217,8 @@ export const addToWaitlist = async (email: string, phone?: string) => {
 
     if ((email && !validateEmail(email)) || (phone && !validatePhone(phone))) return false;
 
+    await recalculateWaitlistPositions();
+    
     const waitlistRef = collection(firestore, 'waitlist');
     
     const uniqueLink = generateUniqueLink();
