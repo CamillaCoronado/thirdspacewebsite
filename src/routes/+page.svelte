@@ -72,50 +72,97 @@ interface User {
   id: string;
   waitlist_number: number;
   referral_count: number;
-  isValid: boolean;
+  isValid?: boolean;  // Making isValid optional since it's a derived property
 }
 
 const recalculateWaitlistPositions = async () => {
   try {
     const waitlistCollection = collection(firestore, 'waitlist');
     const querySnapshot = await getDocs(waitlistCollection);
+    
+    console.log('Total documents in collection:', querySnapshot.size);
 
-    const isValidUser = (user: User) => user.waitlist_number >= 0 && user.referral_count >= 0;
+    const isValidUser = (user: User): boolean => {
+      const isValid = user.waitlist_number > 0 && user.referral_count >= 0;
+      if (!isValid) {
+        console.log('Invalid user found:', user);
+      }
+      return isValid;
+    };
 
     // Extract and validate users
     const users: User[] = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      const waitlist_number = typeof data.waitlist_number === 'number' ? data.waitlist_number : 0;
-      const referral_count = typeof data.referral_count === 'number' ? data.referral_count : 0;
-      return { 
+      console.log('Raw user data:', data);
+      
+      const waitlist_number = Number(data.waitlist_number);
+      const referral_count = Number(data.referral_count);
+      
+      // Log any NaN conversions
+      if (isNaN(waitlist_number)) console.log('Invalid waitlist_number:', data.waitlist_number);
+      if (isNaN(referral_count)) console.log('Invalid referral_count:', data.referral_count);
+
+      const user: User = { 
         id: doc.id, 
         waitlist_number, 
-        referral_count, 
-        isValid: isValidUser({ waitlist_number, referral_count } as User)
+        referral_count
       };
+      return user;
     });
 
+    console.log('Total users parsed:', users.length);
+
     // Filter valid and invalid users
-    const validUsers = users.filter(user => user.isValid);
-    const invalidUsers = users.filter(user => !user.isValid);
+    const validUsers = users.filter(isValidUser);
+    const invalidUsers = users.filter(user => !isValidUser(user));
+
+    console.log('Valid users:', validUsers.length);
+    console.log('Invalid users:', invalidUsers.length);
+    console.log('Total after filtering:', validUsers.length + invalidUsers.length);
 
     // Sort valid users by referral count and then by original waitlist number
-    validUsers.sort((a, b) => b.referral_count - a.referral_count || a.waitlist_number - b.waitlist_number);
+    validUsers.sort((a, b) => {
+      const referralDiff = b.referral_count - a.referral_count;
+      return referralDiff !== 0 ? referralDiff : a.waitlist_number - b.waitlist_number;
+    });
 
     // Assign new positions without gaps
-    validUsers.forEach((user, index) => { user.waitlist_number = index + 1; });
-    invalidUsers.forEach((user, index) => { user.waitlist_number = validUsers.length + index + 1; });
+    let position = 1;
+    const updatedUsers: User[] = [
+      ...validUsers.map(user => {
+        const updated: User = {
+          ...user,
+          waitlist_number: position++
+        };
+        console.log(`Assigning position ${updated.waitlist_number} to user ${updated.id}`);
+        return updated;
+      }),
+      ...invalidUsers.map(user => {
+        const updated: User = {
+          ...user,
+          waitlist_number: position++
+        };
+        console.log(`Assigning position ${updated.waitlist_number} to invalid user ${updated.id}`);
+        return updated;
+      })
+    ];
 
-    // Merge the lists back together and update Firestore documents
-    const allUsers = [...validUsers, ...invalidUsers];
-    const updatePromises = allUsers.map(user =>
-      updateDoc(doc(firestore, 'waitlist', user.id), { waitlist_number: user.waitlist_number })
+    console.log('Final number of users to update:', updatedUsers.length);
+
+    // Update Firestore documents
+    const updatePromises = updatedUsers.map(user =>
+      updateDoc(doc(firestore, 'waitlist', user.id), { 
+        waitlist_number: user.waitlist_number 
+      })
     );
 
     await Promise.all(updatePromises);
+    
     console.log('Waitlist recalculated successfully');
+    console.log('Final positions assigned:', position - 1);
   } catch (error) {
     console.error('Error recalculating waitlist:', error);
+    throw error;
   }
 };
 
