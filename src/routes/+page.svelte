@@ -75,97 +75,6 @@ interface User {
   isValid?: boolean;  // Making isValid optional since it's a derived property
 }
 
-const recalculateWaitlistPositions = async () => {
-  try {
-    const waitlistCollection = collection(firestore, 'waitlist');
-    const querySnapshot = await getDocs(waitlistCollection);
-    
-    console.log('Total documents in collection:', querySnapshot.size);
-
-    const isValidUser = (user: User): boolean => {
-      const isValid = user.waitlist_number > 0 && user.referral_count >= 0;
-      if (!isValid) {
-        console.log('Invalid user found:', user);
-      }
-      return isValid;
-    };
-
-    // Extract and validate users
-    const users: User[] = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      console.log('Raw user data:', data);
-      
-      const waitlist_number = Number(data.waitlist_number);
-      const referral_count = Number(data.referral_count);
-      
-      // Log any NaN conversions
-      if (isNaN(waitlist_number)) console.log('Invalid waitlist_number:', data.waitlist_number);
-      if (isNaN(referral_count)) console.log('Invalid referral_count:', data.referral_count);
-
-      const user: User = { 
-        id: doc.id, 
-        waitlist_number, 
-        referral_count
-      };
-      return user;
-    });
-
-    console.log('Total users parsed:', users.length);
-
-    // Filter valid and invalid users
-    const validUsers = users.filter(isValidUser);
-    const invalidUsers = users.filter(user => !isValidUser(user));
-
-    console.log('Valid users:', validUsers.length);
-    console.log('Invalid users:', invalidUsers.length);
-    console.log('Total after filtering:', validUsers.length + invalidUsers.length);
-
-    // Sort valid users by referral count and then by original waitlist number
-    validUsers.sort((a, b) => {
-      const referralDiff = b.referral_count - a.referral_count;
-      return referralDiff !== 0 ? referralDiff : a.waitlist_number - b.waitlist_number;
-    });
-
-    // Assign new positions without gaps
-    let position = 1;
-    const updatedUsers: User[] = [
-      ...validUsers.map(user => {
-        const updated: User = {
-          ...user,
-          waitlist_number: position++
-        };
-        console.log(`Assigning position ${updated.waitlist_number} to user ${updated.id}`);
-        return updated;
-      }),
-      ...invalidUsers.map(user => {
-        const updated: User = {
-          ...user,
-          waitlist_number: position++
-        };
-        console.log(`Assigning position ${updated.waitlist_number} to invalid user ${updated.id}`);
-        return updated;
-      })
-    ];
-
-    console.log('Final number of users to update:', updatedUsers.length);
-
-    // Update Firestore documents
-    const updatePromises = updatedUsers.map(user =>
-      updateDoc(doc(firestore, 'waitlist', user.id), { 
-        waitlist_number: user.waitlist_number 
-      })
-    );
-
-    await Promise.all(updatePromises);
-    
-    console.log('Waitlist recalculated successfully');
-    console.log('Final positions assigned:', position - 1);
-  } catch (error) {
-    console.error('Error recalculating waitlist:', error);
-    throw error;
-  }
-};
-
 export const incrementReferralCount = async (uniqueId: string) => {
   try {
     const waitlistRef = collection(firestore, 'waitlist');
@@ -178,7 +87,6 @@ export const incrementReferralCount = async (uniqueId: string) => {
       await updateDoc(docRef, {
         referral_count: increment(1),
       });
-      await recalculateWaitlistPositions();
     }
   } catch (error) {
     console.error('Error updating referral count: ', error);
@@ -263,8 +171,6 @@ export const addToWaitlist = async (email: string, phone?: string) => {
     }
 
     if ((email && !validateEmail(email)) || (phone && !validatePhone(phone))) return false;
-
-    await recalculateWaitlistPositions();
     
     const waitlistRef = collection(firestore, 'waitlist');
     
@@ -471,9 +377,7 @@ export function handleError(errorMessage: string): void {
           class:h-auto={showNewBlock == 'waitlist success'}
           class:h-0={showNewBlock != 'waitlist success'}
           class:absolute={showNewBlock !== 'waitlist success'}>
-          <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>
-          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months of premium free!</p>
-        
+          <h2 class="font-bold mb-16">Yay! You're on the waitlist.</h2>        
           <div class="flex justify-center items-center mb-16 space-x-2">
             <input 
               type="text" 
@@ -551,9 +455,7 @@ export function handleError(errorMessage: string): void {
           class:h-auto={showNewBlock == 'waitlist check success'}
           class:h-0={showNewBlock != 'waitlist check success'}
           class:absolute={showNewBlock !== 'waitlist check success'}>
-          <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>
-          <p class="mb-16 bold-text text-lg">Skip ahead in line by referring friends. Top 15 get three months premium free!</p>
-        
+          <h2 class="font-bold mb-16">Yay! You're #{populateWaitlistInfo} on the waitlist.</h2>        
           <div class="flex justify-center items-center mb-16 space-x-2">
             <input 
               type="text" 
