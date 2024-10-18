@@ -4,6 +4,7 @@
   import { v4 as uuidv4 } from 'uuid';
   let email = '';
   let phone = '';
+  let zipcode: number | null = null;
   let waitlistLink: string = "";
   let populateWaitlistInfo: number;
 
@@ -21,7 +22,7 @@ const handleSubmit = async (e: Event) => {
   e.preventDefault();
   
   try {
-    const result = await addToWaitlist(email, phone);
+    const result = await addToWaitlist(email, zipcode, phone, );
 
     if (result) {
     handleWaitlistAction("waitlistSuccess");
@@ -67,13 +68,6 @@ const getNextWaitlistNumber = async () => {
     throw error;
   }
 };
-
-interface User {
-  id: string;
-  waitlist_number: number;
-  referral_count: number;
-  isValid?: boolean;  // Making isValid optional since it's a derived property
-}
 
 export const incrementReferralCount = async (uniqueId: string) => {
   try {
@@ -163,31 +157,55 @@ const generateUniqueLink = (): string => {
   // return `http://localhost:5173/?referral=${uniqueId}`;
 };
 
-export const addToWaitlist = async (email: string, phone?: string) => {
+export const addToWaitlist = async (email: string, zipcode: number | null, phone?: string) => {
   try {
-    if (!email)  {
-      handleError("Please provide email to join the waitlist.")
+    if (!email) {
+      handleError("Please provide email to join the waitlist.");
       return false;
     }
 
+    if(zipcode != null) {
+      let zipcodeStr = zipcode.toString();
+      if (zipcodeStr.length != 5) {
+        handleError("Zipcode format is invalid.")
+        return false;
+      }
+    }
+    
+
     if ((email && !validateEmail(email)) || (phone && !validatePhone(phone))) return false;
-    
+
     const waitlistRef = collection(firestore, 'waitlist');
-    
     const uniqueLink = generateUniqueLink();
-    const waitlistNumber = await getNextWaitlistNumber();
     const referralCount = 0;
 
-    const data: Partial<{ email: string; phone: string; waitlist_number: number; unique_link: string; referral_count: number; }> = {
-      waitlist_number: waitlistNumber,
+    // Add the user with waitlist_number set to 0 initially
+    const data: Partial<{ email: string; phone: string; waitlist_number: number; zipcode: number; unique_link: string; referral_count: number; }> = {
+      waitlist_number: 0,  // Placeholder waitlist number
       unique_link: uniqueLink,
       referral_count: referralCount,
     };
-    
+
     if (email) data.email = email;
     if (phone) data.phone = phone;
 
-    await addDoc(waitlistRef, data);
+    if (zipcode != null) {
+      data.zipcode = zipcode;
+    }
+
+    console.log("email: ", email, " (Type: ", typeof email, ")");
+    console.log("phone: ", phone, " (Type: ", typeof phone, ")");
+    console.log("zipcode: ", zipcode, " (Type: ", typeof zipcode, ")");
+    console.log("waitlist_number: ", data.waitlist_number, " (Type: ", typeof data.waitlist_number, ")");
+    console.log("unique link: ", uniqueLink, " (Type: ", typeof uniqueLink, ")");
+    console.log("referral count: ", referralCount, " (Type: ", typeof referralCount, ")");
+
+    // Add the document with the placeholder waitlist number
+    const docRef = await addDoc(waitlistRef, data);
+
+    // After successful addition, get the next waitlist number and update the document
+    const waitlistNumber = await getNextWaitlistNumber();
+    await updateDoc(docRef, { waitlist_number: waitlistNumber });
 
     return true;
   } catch (error) {
@@ -195,6 +213,7 @@ export const addToWaitlist = async (email: string, phone?: string) => {
     throw error;
   }
 };
+
 
 export const getWaitlistInfo = async (email?: string, phone?: string) => {
   try {
@@ -268,6 +287,7 @@ $: phone = formatPhoneNumber(phone);
 function clearAllTextInputs(): void {
   phone = '';
   email = '';
+  zipcode = null;
 }
 
 export function validateEmail(email: string): boolean {
@@ -355,6 +375,12 @@ export function handleError(errorMessage: string): void {
               bind:value={email} 
               class="mb-16 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
             />
+            <input
+              type="number"
+              placeholder="Zipcode"
+              bind:value={zipcode}
+              class="mb-16 text-xl block w-full px-8 py-8 border-2 border-medium-indigo rounded-md"
+              />
             <input 
               type="text"
               id="phone"
