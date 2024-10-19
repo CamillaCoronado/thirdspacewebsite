@@ -350,7 +350,7 @@ export function handleError(errorMessage: string): void {
 </script>
   <!-- <button class=" bg-white" on:click={() => clearAllTextInputs()}>button</button> -->
   <main class="bg-indigo text-white px-16 pt-16 min-h-[100vh]">
-    <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32 md:mb-64">
+    <header class="flex justify-between flex-col md:flex-row items-center md:justify-end mb-32">
       <!-- <a href="/about" class="underline text-white self-end md:self-center text-base mb-32 md:mb-0 grow md:grow-0 md:order-2">About</a> -->
       <button on:click={() => handleWaitlistAction("initial")}>
         <img src="/assets/logo-white.png" alt="thirdspace logo" class="w-[initial] h-[40px] md:order-1 cursor-pointer">
@@ -366,7 +366,7 @@ export function handleError(errorMessage: string): void {
           class:h-0={showNewBlock != 'initial'}
           class:absolute={showNewBlock !== 'initial'}>
           <h4 class="text-2xl font-bold mb-8 uppercase hidden md:block">Introducing Thirdspace</h4>
-          <h2 class="text-[40px] mb-16 font-bold leading-[49px]">presto chango now you have a friendo</h2>
+          <h2 class="text-[40px] mb-16 font-bold leading-[49px]">No swiping.<br>More meeting.</h2>
           
           <form on:submit={handleSubmit} class="flex flex-col text-dark-charcoal">
             <input 
@@ -535,7 +535,5 @@ export function handleError(errorMessage: string): void {
       </div>
     </section>
   </main>
-  <img src="/assets/astronaut.png" alt="Astronaut" class="astronaut overflow-hidden object-contain h-[78px] w-[59px]"
-  >
 
   
